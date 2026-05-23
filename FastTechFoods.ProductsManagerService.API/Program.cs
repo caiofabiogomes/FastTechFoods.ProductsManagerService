@@ -1,8 +1,31 @@
 using FastTechFoods.ProductsManagerService.Application;
 using FastTechFoods.ProductsManagerService.Infraestructure;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+var serviceName = "FastTechFoods.ProductsServiceManagerAPI";
+
+// Add services to the container
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddSource("MassTransit")
+            .AddOtlpExporter(options =>
+            {
+                // ?? FOR�ANDO A URL E O PROTOCOLO ??
+                options.Endpoint = new Uri("http://otel-collector:4317");
+                options.Protocol = OtlpExportProtocol.Grpc;
+            });
+    });
 
 // Add services to the container.
 
